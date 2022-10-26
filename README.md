@@ -2,4 +2,4 @@
 
 mercurio.pdf &rarr; Solución
 
-mercurio.Rmd -> Programa para correr en R
+mercurio.Rmd &rarr; Programa para correr en R
