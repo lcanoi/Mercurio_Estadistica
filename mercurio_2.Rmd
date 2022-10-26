@@ -18,29 +18,18 @@ influían en el nivel de contaminación por mercurio. Las variables que se
 midieron se encuentran en mercurio.csv Descargar mercurio.csv y su
 descripción es la siguiente:
 
-X1 = número de indentificación
-X2 = nombre del lago
-X3 = alcalinidad (mg/l de carbonato de calcio)
-X4 = PH
-X5 = calcio (mg/l)
-X6 = clorofila (mg/l)
-X7 = concentración media de mercurio (parte por millón) en el tejido
-muscualar del grupo de peces estudiados en cada lago
-X8 = número de peces estudiados en el lago
-X9 = mínimo de la concentración de mercurio en cada grupo de peces
-X10 = máximo de la concentración de mercurio en cada grupo de peces
-X11 = estimación (mediante regresión) de la concentración de mercurio en
-el pez de 3 años (o promedio de mercurio cuando la edad no está disponible)
-X12 = indicador de la edad de los peces (0: jóvenes; 1: maduros)
-
-¿Cuáles son los principales factores que influyen en el nivel de
-contaminación por mercurio en los peces de los lagos de Florida?
-
-## Aproximación al problema
-
-Buscaremos realizar una Regresión Lineal para determinar el mejor modelo
-que conteste la pregunta. X7 es la variable que buscaremos predecir con
-el modelo. Este problema lo atacaremos con Pruebas de Hipótesis
+- X1 = número de indentificación
+- X2 = nombre del lago
+- X3 = alcalinidad (mg/l de carbonato de calcio)
+- X4 = PH
+- X5 = calcio (mg/l)
+- X6 = clorofila (mg/l)
+- X7 = concentración media de mercurio (parte por millón) en el tejido muscualar del grupo de peces estudiados en cada lago
+- X8 = número de peces estudiados en el lago
+- X9 = mínimo de la concentración de mercurio en cada grupo de peces
+- X10 = máximo de la concentración de mercurio en cada grupo de peces
+- X11 = estimación (mediante regresión) de la concentración de mercurio en el pez de 3 años (o promedio de mercurio cuando la edad no está disponible)
+- X12 = indicador de la edad de los peces (0: jóvenes; 1: maduros)
 
 ## Datos
 
@@ -57,38 +46,107 @@ colnames(D) <- c("ID","Nombre","Alcalinidad", "PH", "Calcio", "Clorofila", "Medi
 head(D, 5)
 ```
 
-ID y Nombre no son variables explicativas
-No es útil analisarlas por lo cual las eliminamos
+ID y Nombre no son variables númericas y Edad no es variable continua
+No son explicativas, así que las eliminamos
 
 ```{r}
 D$ID <- NULL
 D$Nombre <- NULL
+D$Edad <- NULL
 ```
 
-```{r}
-Y=D[,5]
-X=D[,-5]
-```
-
-# 1.Realice un análisis de normalidad de las variables continuas para identificar variables normales. Tome en cuenta los puntos que se sugieren a continuación (no son exhaustivos):
+# 1. Análisis de normalidad de las variables continuas para identificar variables normales.
 
 ### A.
-Realice la prueba de normalidad de Mardia y la prueba de Anderson Darling para identificar las variables que son normales y detectar posible normalidad multivariada de grupos de variables.
+Prueba de normalidad de Mardia y prueba de Anderson Darling para identificar las variables que son normales y detectar posible normalidad multivariada de grupos de variables.
 
-Normalidad de Mardia
+Hipótesis:
+$H_0:$ Si hay normalidad multivariada
+
+$H_a$: No hay normalidad multivariada
 
 ```{r}
 library(MVN)
 mvn(D, subset = NULL, mvn = "mardia")
 ```
 
-Prueba de Anderson Darling
+Contamos con una Mardia Skewness de 434.34 y una Mardia Kurtosis de 5.77
+Esta función realiza pruebas de normalidad multivariada de sesgo y curtosis y nos da como resultado que No hay normalidad multivariada. De igual manera, utilizando un nivel de significancia de 0.05, podemos ver como los p-values de sesgo (4.1e-26) y curtosis (7.9e-09) son menores al nivel de significancia, por lo que rechazamos a $H_0$ y determinamos que No hay nomralidad multivariada en las variables.
+
+Con el Test de Anderson-Darling encontramos que las variables que son normales son PH y MaxMercurio
+
+### B.
+Prueba de Mardia y Anderson Darling de las variables que sí tuvieron normalidad en los incisos anteriores. 
 
 ```{r}
-library(nortest)
-for (i in 1:9) {
-  print(colnames(D)[i])
-  print(ad.test(D[,i]))
-}
+mvn(D[, c("PH", "MaxMercurio") ], mvn = "mardia")
 ```
+
+A diferencia de la prueba de Mardia con todas las variables, al usar solo las normales (PH y MaxMercurio) obtenemos una curtosis entre -1 y 1, lo cual nos dice que hay normalidad. 
+Asímismo, la prueba de normalidad multivariada de sesgo y curtosis realizada nos da como resultado que Si hay normalidad multivariada, y contamos con p-values que son mayores al nivel de significancia.
+
+### C.
+Gráfica de contorno de la normal multivariada obtenida en el inciso B.
+
+```{r}
+library(mnormt)
+
+# create bivariate normal distribution
+x = seq(3, 10, length.out = 100)
+y = seq(-0.5, 2.5, length.out = 100)
+mu = c(mean(D$PH), mean(D$MaxMercurio))
+sigma <- matrix(c(sd(D$PH)^2, 0, 0,sd(D$MaxMercurio)^2),2,2)
+z = outer(x, y, function(x, y) dmnorm(cbind(x, y), mu, sigma))
+
+# create contour plot
+contour(x, y, z, nlevels = 20, xlab = "PH", ylab = "MaxMercurio")
+```
+
+### D.
+Detecta datos atípicos o influyentes en la normal multivariada encontrada en el inciso B
+
+```{r}
+d = D[, c("PH", "MaxMercurio") ]
+
+p = 2 # usando 2 variables
+# Vector de medias
+X = colMeans(d)
+# Matriz de covarianza
+S = cov(d)
+# Distancia de Mahalanobis
+d2M =  mahalanobis(d,X,S)
+
+# Multinormalidad Test gráfico Q-Q Plot
+plot(qchisq(((1:nrow(d)) - 1/2)/nrow(d), df=p), sort( d2M ), main = "Multinormalidad Test gráfico Q-Q Plot", xlab = "Chi^2", ylab = "d^2M")
+abline(a=0, b=1,col="red")
+```
+
+En la gráfica de distancias de Mahalanobis podemos observar que al inicio los puntos se encuentran cerca de la normalidad multivariada, pero conforme avanza la gráfica en las últimas instancias a la derecha se observa una ligera curva hacia abajo. Los últimos 3 puntos podríamos considerarlos como datos atípicos ya que la distancia se aleja bastante.
+
+
+# 2. Análisis de componentes principales con la base de datos completa para identificar los factores principales que intervienen en el problema de la contaminación por mercurio de los peces en agua dulce. 
+
+### A.
+Justifique por qué es adecuado el uso de componentes principales para analizar la base (haz uso de la matriz de correlaciones)
+
+### B.
+Realiza el análisis de componentes principales y justifica el número de componentes principales apropiados para reducir la dimensión de la base
+
+### C.
+Representa en un gráfico los vectores asociados a las variables y las puntuaciones de las observaciones de las dos primeras componentes
+
+### D.
+Interprete los resultados. Explique brevemente a qué conclusiones llega con su análisis y qué significado tienen los componentes seleccionados en el contexto del problema
+
+
+# 3. Conclusión general
+
+- ¿de qué forma te ayuda este nuevo análisis a contestar la pregunta principal del estudio:  ¿Cuáles son los principales factores que influyen en el nivel de contaminación por mercurio en los peces de los lagos de Florida? 
+
+
+- ¿en qué puede facilitar el estudio la normalidad encontrada en un grupo de variables detectadas? 
+
+
+- ¿cómo te ayudan los componentes principales a abordar este problema?
+
 
