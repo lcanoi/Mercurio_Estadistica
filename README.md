@@ -1,5 +1,5 @@
 # Momento de Retroalimentación: Módulo 5 Procesamiento de datos multivariados (Portafolio Implementación)
 
-mercurio.pdf --> Solución
+mercurio.pdf &rarr; Solución
 
-mercurio.rmd --> Programa para correr en R
+mercurio.Rmd -> Programa para correr en R
