@@ -1,0 +1,94 @@
+---
+title: "Mercurio_2"
+author: "Luis Cano Irigoyen A00827178"
+date: "2022-10-26"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problema
+
+La contaminación por mercurio de peces en el agua dulce comestibles es
+una amenaza directa contra nuestra salud. Se llevó a cabo un estudio
+reciente en 53 lagos de Florida con el fin de examinar los factores que
+influían en el nivel de contaminación por mercurio. Las variables que se
+midieron se encuentran en mercurio.csv Descargar mercurio.csv y su
+descripción es la siguiente:
+
+X1 = número de indentificación
+X2 = nombre del lago
+X3 = alcalinidad (mg/l de carbonato de calcio)
+X4 = PH
+X5 = calcio (mg/l)
+X6 = clorofila (mg/l)
+X7 = concentración media de mercurio (parte por millón) en el tejido
+muscualar del grupo de peces estudiados en cada lago
+X8 = número de peces estudiados en el lago
+X9 = mínimo de la concentración de mercurio en cada grupo de peces
+X10 = máximo de la concentración de mercurio en cada grupo de peces
+X11 = estimación (mediante regresión) de la concentración de mercurio en
+el pez de 3 años (o promedio de mercurio cuando la edad no está disponible)
+X12 = indicador de la edad de los peces (0: jóvenes; 1: maduros)
+
+¿Cuáles son los principales factores que influyen en el nivel de
+contaminación por mercurio en los peces de los lagos de Florida?
+
+## Aproximación al problema
+
+Buscaremos realizar una Regresión Lineal para determinar el mejor modelo
+que conteste la pregunta. X7 es la variable que buscaremos predecir con
+el modelo. Este problema lo atacaremos con Pruebas de Hipótesis
+
+## Datos
+
+```{r}
+D=read.csv("mercurio.csv")
+N=nrow(D)
+```
+
+Cambiamos el nombre de las columnas para comprender mejor los análisis
+
+```{r}
+colnames(D) <- c("ID","Nombre","Alcalinidad", "PH", "Calcio", "Clorofila", "MediaMercurio",
+                    "NumPez", "MinMercurio", "MaxMercurio", "TresMercurio","Edad")
+head(D, 5)
+```
+
+ID y Nombre no son variables explicativas
+No es útil analisarlas por lo cual las eliminamos
+
+```{r}
+D$ID <- NULL
+D$Nombre <- NULL
+```
+
+```{r}
+Y=D[,5]
+X=D[,-5]
+```
+
+# 1.Realice un análisis de normalidad de las variables continuas para identificar variables normales. Tome en cuenta los puntos que se sugieren a continuación (no son exhaustivos):
+
+### A.
+Realice la prueba de normalidad de Mardia y la prueba de Anderson Darling para identificar las variables que son normales y detectar posible normalidad multivariada de grupos de variables.
+
+Normalidad de Mardia
+
+```{r}
+library(MVN)
+mvn(D, subset = NULL, mvn = "mardia")
+```
+
+Prueba de Anderson Darling
+
+```{r}
+library(nortest)
+for (i in 1:9) {
+  print(colnames(D)[i])
+  print(ad.test(D[,i]))
+}
+```
+
