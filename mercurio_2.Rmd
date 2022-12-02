@@ -1,5 +1,5 @@
 ---
-title: "Mercurio_2"
+title: "Reporte final de \"Los peces y el mercurio\""
 author: "Luis Cano Irigoyen A00827178"
 date: "2022-10-26"
 output: word_document
@@ -9,14 +9,13 @@ output: word_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Problema
+## Módulo 5 Procesamiento de datos multivariados (Portafolio Implementación)
 
-La contaminación por mercurio de peces en el agua dulce comestibles es
-una amenaza directa contra nuestra salud. Se llevó a cabo un estudio
-reciente en 53 lagos de Florida con el fin de examinar los factores que
-influían en el nivel de contaminación por mercurio. Las variables que se
-midieron se encuentran en mercurio.csv Descargar mercurio.csv y su
-descripción es la siguiente:
+## Problema
+
+La contaminación por mercurio de peces en el agua dulce comestibles es una amenaza directa contra nuestra salud. Se llevó a cabo un estudio reciente en 53 lagos de Florida con el fin de examinar los factores que influían en el nivel de contaminación por mercurio. 
+
+Variables que se midieron:
 
 - X1 = número de indentificación
 - X2 = nombre del lago
@@ -129,24 +128,83 @@ En la gráfica de distancias de Mahalanobis podemos observar que al inicio los p
 ### A.
 Justifique por qué es adecuado el uso de componentes principales para analizar la base (haz uso de la matriz de correlaciones)
 
+```{r}
+library(ggplot2)
+library(ggcorrplot)
+ggcorrplot(cor(D), hc.order = TRUE, type = "lower", lab = TRUE, lab_size = 3)
+```
+Fuera de NumPez, tenemos una tabla llena de correlaciones moderadas, altas y muy altas, con muy pocas correlaciones como Clacio y MinMercurio que podríamos considerar como bajas. Hay mucha dependencia entre las variables, podemos determinar que varios pares como la Aclalinidad y el Calcio explican casi lo mismo.
+
 ### B.
 Realiza el análisis de componentes principales y justifica el número de componentes principales apropiados para reducir la dimensión de la base
 
+Todo este análisis se relaiza con variables estandarizadas, para que todas contribuyan de la misma manera al análisis
+
+```{r}
+library(FactoMineR)
+library(factoextra)
+pca = PCA(D, scale.unit = TRUE, graph = FALSE)
+pca
+```
+
+Nuestro análisis genera 9 componentes, de los cuales podemos ver los siguientes resultados:
+
+```{r}
+fviz_screeplot(pca, addlabels = TRUE, ylim = c(0, 100))
+```
+
+```{r}
+pca$eig
+```
+A partir de los resultados de los Componentes Principales, determinamos que la dimensión de la base puede ser reducida a los primeros 5 componentes, ya que estos representan más del 95% de la variación total.
+
+```{r}
+pca5 = PCA(D, scale.unit = TRUE, graph = FALSE, ncp=5)
+```
+
+```{r}
+pca5$var$contrib
+```
+En esta tabla podemos ver las contibuciones (en porcentajes) de las 9 variables a los 5 componentes principales.
+
+```{r}
+library("corrplot")
+corrplot(pca5$var$contrib, is.corr=FALSE)   
+```
+
 ### C.
 Representa en un gráfico los vectores asociados a las variables y las puntuaciones de las observaciones de las dos primeras componentes
+```{r}
+options(ggrepel.max.overlaps = Inf)
+fviz_pca_biplot(pca, repel = TRUE, label = "var", col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
+```
+Vemos como todas las variables menos NumPez contribuyen de magnitud similar a la Dimensión 1, y para la dimensión 2 todas las variables menos NumPez contribuyen con relación positiva, siendo Calcio la que más contribuye a este.
+
+Asímismo podemos ver las contribuciones de las variables a los demás componentes:
+```{r}
+fviz_contrib(pca, choice = "var", axes = 3)
+fviz_contrib(pca, choice = "var", axes = 4)
+fviz_contrib(pca, choice = "var", axes = 5)
+```
+
 
 ### D.
 Interprete los resultados. Explique brevemente a qué conclusiones llega con su análisis y qué significado tienen los componentes seleccionados en el contexto del problema
 
+Podemos observar como todas las variables a excepción de NumPez toman parte en explicar los primeros 2 componentes principales, siendo estos los más importantes explicando el 72.96% de la variación, con variables como Alcalinidad, Calcio y MaxMercurio teniendo un ligero mayor ipacto en estos 2 componentes.  
+Sin embargo, los componentes 3, 4 y 5 son mayoritariamente explicados por una sola variable cada uno, siendo NumPez el que contribuye de manera total al componente 3, mayormente Clorofila y poco Calcio para el componente 4, y mayormente PH y poco Clorofila para el componente principal 5.
+
 
 # 3. Conclusión general
 
-- ¿de qué forma te ayuda este nuevo análisis a contestar la pregunta principal del estudio:  ¿Cuáles son los principales factores que influyen en el nivel de contaminación por mercurio en los peces de los lagos de Florida? 
+- ¿de qué forma te ayuda este nuevo análisis a contestar la pregunta principal del estudio:  ¿Cuáles son los principales factores que influyen en el nivel de contaminación por mercurio en los peces de los lagos de Florida?   
+De este análisis primero encontramos que PH y MaxMercurio son las únicas variables que presentan normalidad multivariada, ya que el conjunto de todas las 9 variables numéricas no presenta una distribución normal multivariada. Esto nos ayuda a determinar que variables podríamos utilizar para buscar generar un mejor modelo que explique los principales factores en el nivel de contaminación por mercurio.  
+El análisis de componentes principales de igual manera puede ayudar a encontrar una mejor solución al estudio, ya que crear un modelo con los 5 componentes propuestos que explican el 95.69% de la varianza podría ser de gran utilidad.
 
+- ¿en qué puede facilitar el estudio la normalidad encontrada en un grupo de variables detectadas?   
+La normalidad encontrada en un grupo de variables detectadas nos ayuda a determinar cómo se distribuyen las variables y qué variables podríamos utilizar para buscar generar un mejor modelo, ya que si no se cuenta con una normalidad multivariada el modelo no es tan confiable.
 
-- ¿en qué puede facilitar el estudio la normalidad encontrada en un grupo de variables detectadas? 
-
-
-- ¿cómo te ayudan los componentes principales a abordar este problema?
+- ¿cómo te ayudan los componentes principales a abordar este problema?  
+Trabajar con variables que tienen alta correlación entre si llega a ser un problema ya que estas explican cosas similares de la variable dependiente. Cuando realizamos un análisis estadístico deberíamos buscar que las variables independientes tengan correlaciones bajas y expliquen la mayor parte de la varianza total del modelo. Y para esto, en lugar de utilizar las variables en el problema, podemos utilizar un conjunto de componentes principales, los cuales reducen el tamaño de la base, no tienen alta dependencia entre sí, y explican el porcentaje deseado del modelo. En nuestro caso redujimos la base de 9 variables a 5 componentes que explicaran más del 95% de la varianza.
 
 
