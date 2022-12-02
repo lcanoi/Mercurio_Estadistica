@@ -2,5 +2,5 @@
 
 - mercurio_2.Rmd &rarr; Programa para correr en R
 
-- mercurio_2.pdf &rarr; Solución
+- EvidenciaMercurio_LuisCano_A00827178.pdf &rarr; Solución
 
