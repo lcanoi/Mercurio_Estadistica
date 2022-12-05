@@ -2,7 +2,8 @@
 
 ### Reporte final de "Los peces y el mercurio"
 
+- EvidenciaMercurio_LuisCano_A00827178.pdf &rarr; Análisis y Solución
+
 - mercurio_2.Rmd &rarr; Programa para correr en R
 
-- EvidenciaMercurio_LuisCano_A00827178.pdf &rarr; Solución
-
+- mercurio.csv &arr; Base de datos
