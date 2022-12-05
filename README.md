@@ -6,4 +6,4 @@
 
 - mercurio_2.Rmd &rarr; Programa para correr en R
 
-- mercurio.csv &arr; Base de datos
+- mercurio.csv &rarr; Base de datos
